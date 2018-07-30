@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dat money</title>
+    <style type="text/css">
+        html { font-family: Arial; }
+        #content { margin: 0 auto; text-align: center }
+        #money-spent { font-size: 10em; font-weight: bolder }
+    </style>
+</head>
+<body>
+
+<div id="content">
+    <h2>Money spent:</h2>
+    <p id="money-spent"></p>
+</div>
+
+<script type="text/javascript">
+    const monthlyIncome = prompt('What is your monthly income?');
+    const currencySymbol =  prompt('What is your currency symbol?');
+
+    const secondsInMonth = 730 * 3600;
+    const costPerSecond = monthlyIncome / secondsInMonth;
+    const moneyElement = document.getElementById('money-spent');
+
+    let totalCost = 0;
+    setInterval(() => {
+        totalCost += costPerSecond;
+        moneyElement.innerHTML = currencySymbol + Math.round(totalCost * 1000) / 1000;
+    }, 1000);
+</script>
+
+</body>
+</html>
