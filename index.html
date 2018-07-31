@@ -18,10 +18,11 @@
 
 <script type="text/javascript">
     const monthlyIncome = prompt('What is your monthly income?');
-    const currencySymbol =  prompt('What is your currency symbol?');
+    const currencySymbol =  prompt('What is your currency symbol?', '$');
+    const hoursAWeek = prompt('How many hours a week do you work?', 40)
 
-    const secondsInMonth = 730 * 3600;
-    const costPerSecond = monthlyIncome / secondsInMonth;
+    const secondsInWorkMonth =  (3600 * hoursAWeek) * 4;
+    const costPerSecond = monthlyIncome / secondsInWorkMonth;
     const moneyElement = document.getElementById('money-spent');
 
     let totalCost = 0;
