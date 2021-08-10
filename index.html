@@ -5,32 +5,194 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Dat money</title>
     <style type="text/css">
-        html { font-family: Arial; }
-        #content { margin: 0 auto; text-align: center }
-        #money-spent { font-size: 10em; font-weight: bolder }
+        html {
+            font-family: Arial,serif;
+        }
+
+        #content {
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        #moneySpent, #timeElapsed {
+            font-size: 5em;
+            font-weight: bolder;
+        }
+
+        table tr {
+            height: 25px;
+            text-align: left;
+        }
+
+        form {
+            display: inline-block;
+        }
+
+        button#startStop {
+            width: 20em;
+            height: 10em;
+            font-weight: bolder;
+        }
+
+        button#startStop.pause {
+            background-color: #F44336;
+        }
+
+        button#startStop.start {
+            background-color: #4CAF50;
+        }
+
+        #clearButtonContainer {
+            margin-top: .5em;
+        }
+
+        button#clear {
+            width: 20em;
+            height: 3em;
+        }
+
+        #clearAndReloadContainer {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
 
 <div id="content">
     <h2>Money spent:</h2>
-    <p id="money-spent"></p>
+    <p id="moneySpent"></p>
+    <h2>Time Elapsed:</h2>
+    <p id="timeElapsed"></p>
+    <button class="start" id="startStop">Start</button>
+    <div id="clearButtonContainer"><button id="clear">Reset timer</button></div>
+    <h2>Settings:</h2>
+    <div>
+        <form id="settings">
+            <table>
+                <tbody>
+                <tr>
+                    <td><label for="currencySymbol">Currency Symbol:</label></td>
+                    <td><input id="currencySymbol" name="currencySymbol" type="text" /></td>
+                </tr>
+                <tr>
+                    <td><label for="income">Yearly income:</label></td>
+                    <td><input id="income" name="income" type="text" /></td>
+                </tr>
+                <tr>
+                    <td><label for="hoursWorked">Hours worked (weekly):</label></td>
+                    <td><input id="hoursWorked" name="hoursWorked" type="text" /></td>
+                </tr>
+                <tr>
+                    <td colspan="2" id="clearAndReloadContainer">
+                        <button id="clearAndReload">Clear &amp; Reload</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </form>
+    </div>
 </div>
 
 <script type="text/javascript">
-    const monthlyIncome = prompt('What is your monthly income?');
-    const currencySymbol =  prompt('What is your currency symbol?', '$');
-    const hoursAWeek = prompt('How many hours a week do you work?', 40)
+    const getOrPrompt = (key, promptText, defaultValue) => {
+        let val = localStorage.getItem(key)
+        if(val === null) {
+            val = prompt(promptText, defaultValue)
+            localStorage.setItem(key, val)
+        }
 
-    const secondsInWorkMonth =  (3600 * hoursAWeek) * 4;
-    const costPerSecond = monthlyIncome / secondsInWorkMonth;
-    const moneyElement = document.getElementById('money-spent');
+        return val
+    }
 
-    let totalCost = 0;
-    setInterval(() => {
-        totalCost += costPerSecond;
-        moneyElement.innerHTML = currencySymbol + Math.round(totalCost * 1000) / 1000;
-    }, 1000);
+    const YEARLY_INCOME_KEY = 'year_income';
+    const CURRENCY_SYMBOL_KEY = 'currency_symbol';
+    const WEEKLY_HOURS_KEY = 'weekly_hours';
+    const TIME_SINCE_START_KEY = 'time_since_start';
+
+    const resetButtonEle = document.getElementById('clear');
+    const clearAndReloadEle = document.getElementById('clearAndReload');
+    const buttonEle = document.getElementById('startStop');
+    const incomeEle = document.getElementById('income');
+    const hoursWorkedEle = document.getElementById('hoursWorked');
+    const currencySymbolEle = document.getElementById('currencySymbol');
+    const moneyElementEle = document.getElementById('moneySpent');
+    const timeElapsedEle = document.getElementById('timeElapsed');
+
+    let yearlyIncome = getOrPrompt(YEARLY_INCOME_KEY, 'What is your yearly income?');
+    let currencySymbol =  getOrPrompt(CURRENCY_SYMBOL_KEY, 'What is your currency symbol?', '$');
+    let hoursAWeek = getOrPrompt(WEEKLY_HOURS_KEY, 'How many hours a week do you work?', 40)
+    let secondsInWorkMonth = 0;
+    let costPerSecond = 0;
+
+    const calculate = () => {
+        secondsInWorkMonth = (3600 * hoursAWeek) * 4;
+        costPerSecond = (yearlyIncome / 12) / secondsInWorkMonth;
+    }
+
+    currencySymbolEle.value = currencySymbol;
+    hoursWorkedEle.value = hoursAWeek;
+    incomeEle.value = yearlyIncome;
+
+    calculate();
+    let timeSinceStart = parseInt(localStorage.getItem(TIME_SINCE_START_KEY));
+    if(isNaN(timeSinceStart)) {
+        timeSinceStart = 0
+    }
+
+    let interval = 1000;
+    let timer = null;
+
+    const start = () => {
+        timer = setInterval(() => {
+            timeSinceStart += interval
+            const cost = (timeSinceStart / 1000) * costPerSecond
+            moneyElementEle.innerHTML = currencySymbol + Math.round(cost * 1000) / 1000;
+            timeElapsedEle.innerHTML = `${timeSinceStart / 1000}s`
+            localStorage.setItem(TIME_SINCE_START_KEY, timeSinceStart)
+        }, 1000);
+
+        buttonEle.className = 'pause';
+        buttonEle.innerHTML = 'Pause';
+        buttonEle.onclick = stop;
+    }
+
+    const stop = () => {
+        clearInterval(timer)
+        buttonEle.className = 'start';
+        buttonEle.innerHTML = 'Start';
+        buttonEle.onclick = start;
+    }
+
+    start();
+
+    clearAndReloadEle.onclick = () => {
+        if(!confirm('Are you sure?')) {
+            return;
+        }
+    }
+
+    resetButtonEle.onclick = () => {
+        timeSinceStart = 0;
+    }
+
+    currencySymbolEle.onblur = () => currencySymbol = currencySymbolEle.value
+
+    incomeEle.onblur = () => {
+        yearlyIncome = incomeEle.value
+        calculate();
+    }
+
+    hoursWorkedEle.onblur = () => {
+        hoursAWeek = hoursWorkedEle.value
+        calculate();
+    }
+
+    clearAndReloadEle.onclick = () => {
+        stop()
+
+        localStorage.clear()
+        window.reload();
+    }
 </script>
 
 </body>
